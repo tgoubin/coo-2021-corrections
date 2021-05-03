@@ -1,0 +1,364 @@
+:toc:
+
+= COO - TD3
+
+== Quelques éditeurs UML
+
+* PlantUML
+** https://www.planttext.com/
+** https://plantuml.com/fr/
+
+* StarUML : https://staruml.io/
+
+* Draw.io : https://app.diagrams.net/
+
+== 1 - Gestion des stages
+
+=== 1.2
+
+[plantuml, "td312", png]     
+----
+@startuml
+
+class Stage {
+    lieu
+    dateDebut
+    dateFin
+    nomTuteurEntreprise
+    theme
+    note
+}
+
+class Entreprise {
+    nom
+    adresse
+    siegeSocial
+}
+
+class Promotion {
+    libelle
+}
+
+class Etudiant {
+    numINE
+    nom
+    prenom
+    moyenneGenerale
+}
+
+class GroupeTP {
+    code
+}
+
+class GroupeTD {
+    code
+}
+
+class Enseignant {
+    nom
+    prenom
+    specialite
+}
+
+Stage "*" -- "1" Entreprise
+Stage "*" -- "1" Promotion
+Etudiant "1..*" -- "1" GroupeTP
+GroupeTD "1" *-- "2" GroupeTP
+GroupeTD "1..*" --* "1" Promotion
+Stage "*" -- "1" Enseignant
+Stage "0..1" -- "0..1" Etudiant
+
+@enduml
+----
+
+== 2 - Organisme de formation
+
+=== 2.2
+
+[plantuml, "td322", png]     
+----
+@startuml
+
+class Formation {
+    code
+    theme
+    prix
+    nbJours
+    preRequis
+    nbStagiairesMax
+}
+
+class Session {
+    nomFormateur
+    dateDebut
+    dateFin
+}
+
+class Salle {
+    numero
+}
+
+class Batiment {
+    numero
+}
+
+class Stagiaire  {
+    nom
+    prenom
+}
+
+class Evaluation {
+    commentaire
+}
+
+Formation "1" *-- "1..*" Session
+Session "*" -- "1" Salle
+Salle "1..*" --* "1" Batiment
+Stagiaire "*" -- "*" Session
+(Stagiaire, Session) . Evaluation
+
+@enduml
+----
+
+== 3 - Location d'appartement
+
+==== 3.2
+
+[plantuml, "td332", png]     
+----
+@startuml
+
+class Appartement {
+    numero
+}
+
+class Proprietaire {
+    adresse
+}
+
+class Immeuble {
+    nom
+}
+
+class Residence {
+    nom
+}
+
+class Concierge {
+    numeroTelephone
+}
+
+abstract class Personne {
+    nom
+    prenom
+}
+
+class CategorieImmeuble {
+    nom
+}
+
+class TypeAppartement {
+    nom
+}
+
+class ProprietairePossedeAppartement {
+    pourcentage
+}
+
+class Locataire {
+    age
+    dateDebutBail
+    dateFinBail
+}
+
+Proprietaire "1..4" -- "*" Appartement
+Appartement "1..*" --* "1" Immeuble
+Immeuble "1..*" --* "1" Residence
+Residence "1" -- "1" Concierge
+Immeuble "*" -- "1" CategorieImmeuble
+Appartement "*" -- "1" TypeAppartement
+Appartement "1" -- "0..1" Locataire
+
+(Proprietaire, Appartement) . ProprietairePossedeAppartement
+
+Concierge --|> Personne
+Proprietaire --|> Personne
+Locataire --|> Personne
+
+@enduml
+----
+
+== 4 - Tableau de service des Navigants AirFrance
+
+=== 4.2
+
+==== 4.2.1 - Liste classes et attributs
+
+===== ANALYSE DE L'ENONCE PHRASE PAR PHRASE
+
+----
+L’équipage d’un avion est toujours constitué d’un pilote, d’un copilote et de plusieurs personnels navigants et commerciaux (PNC).
+----
+
+* *L'équipage d'un avion* -> classe *Equipage*
+* *Pilote* : 2 possibilités, en attendant davantage d'informations
+** attribut de la classe *Equipage*
+** classe *Pilote*, liée à la classe *Equipage* par une relation 1 - *
+* *Copilote* 2 possibilités, en attendant davantage d'informations
+** attribut de la classe *Equipage*
+** classe *Pilote*, liée à la classe *Equipage* par une relation 1 - *
+* *PNC* 2 possibilités, en attendant davantage d'informations
+** attribut de la classe *Equipage*
+** classe *PNC*, liée à la classe *Equipage* par une relation * - *
+
+----
+Chacune de ces personnes est identifiée par son nom et sa fonction. L’équipage d’un avion est reconstitué pour chacun de ses vols.
+----
+
+* *nom* -> description commune de *Pilote*, *Copilote* et *PNC*
+** Confirmation que *Pilote*, *Copilote* et *PNC* sont alors des classes
+** Chacune a comme attribut *nom* -> utilisation d'une classe *MembreEquipage*
+*** dont *Pilote*, *Copilote* et *PNC* héritent
+*** qui porte l'attribut *nom*
+* la notion de *fonction* est portée par la classe elle-même : *Pilote*, *Copilote* ou *PNC*
+* *L'équipage d'un avion* -> déjà identifié dans la phrase précédente par la classe *Equipage*
+* *chacuns de ses vols* -> classe vols, liée à la classe *Equipage* par une relation 1 - *
+
+----
+Chaque membre d’équipage doit être opérationnel sur deux catégories d’avions (par exemple, le PNC Richard est opérationnel sur Airbus A320 et Boeing 747).
+----
+
+* *Chaque membre d'équipage* -> déjà identifié dans la phrase précédente par la classe *MembreEquipage*
+* *catégories d'avions* : 2 possibilités, en attendant davantage d'informations
+** attribut de la classe *MembreEquipage*
+** classe *CategorieAvion*, liée à la classe *MembreEquipage* par une relation 0..2 - *
+
+----
+Chaque catégorie d’avions requiert un nombre de PNC dans son équipage oscillant entre un minimum et un maximum (par exemple, les PNC des Airbus A320 doivent être entre six et huit, et ceux d’un B747 entre 12 et 16).
+----
+
+* *Chaque catégorie d’avions requiert un nombre de PNC dans son équipage oscillant entre un minimum et un maximum* -> description d'une catégorie d'avion
+** Confirmation que *CategorieAvion* est une classe
+** *minimumNombrePNC* et *maximumNombrePNC* en seraient les attributs
+** *libelle* serait un attribut également ("Airbus A320", "Boeing 747", etc...)
+
+===== RECAPITULATIF APRES L'ENONCE
+
+|===
+|Elément|Type|Hérite de|Association
+
+|Equipage|Classe||
+|Pilote|Classe|MembreEquipage|Equipage * - 1 Pilote
+|Copilote|Classe|MembreEquipage|Equipage * - 1 Copilote
+|PNC|Classe|MembreEquipage|Equipage * - 1 PNC
+|MembreEquipage|Classe||Pilote / Copilote / PNC --|> MembreEquipage
+|MembreEquipage / nom|Attribut||
+|Vol|Classe||Equipage 1 - * Vol
+|CategorieAvion|Classe||MembreEquipage * - 0..2 CategorieAvion
+|CategorieAvion / minimumNombrePNC|Attribut||
+|CategorieAvion / maximumNombrePNC|Attribut||
+|CategorieAvion / libelle|Attribut||
+|===
+
+===== ANALYSE DU TABLEAU DE SERVICE
+
+* Colonne *"Avion"*
+** Représente des instances d'une classe *Avion*
+** Possède un attribut *numero* (inscrit dans les cases de la colonne)
+
+* Colonne *"Vol"*
+** Représente des instances de la classe *Vol* déjà identifiée précédemment
+** Possède un attribut *numero* (inscrit dans les cases de la colonne)
+** Liée à la classe *Avion* par une relation 1 - *
+
+* Colonne *"Dest"*
+** Représente un attribut *destination* de la classe *Vol*
+** Pourrait représenter une instance d'une classe *Aeroport* - pour éviter les doublons - dans ce cas liée à *Vol* par une relation 1 - *
+
+* Colonne *"Date"*
+** Représente un attribut *date* de la classe *Vol*
+
+* Colonne *"Catégorie"*
+** Représente des instances de la classe *CategorieAvion* déjà identifiée précédemment
+** Liée à la classe *Avion* par une relation 1 - *
+
+* Colonne *"Site"*
+** Représente un attribut *site* ou *depart* de la classe *Vol*
+** Pourrait représenter une instance d'une classe *Aeroport* - pour éviter les doublons - dans ce cas liée à *Vol* par une relation 1 - *
+
+* Colonne *"Nom"*
+** Représente l'attribut *nom* de la classe *MembreEquipage*
+
+* Colonne *"Fonction"*
+** Représente la classe *Pilote*, *Copilote* ou *PNC*
+
+===== RECAPITULATIF APRES LE TABLEAU DE SERVICE
+
+|===
+|Elément|Type|Hérite de|Association
+
+|Avion|Classe||CategorieAvion 1 - * Avion
+|Vol|Classe||Avion 1 - * Vol
+|Vol / numero|Attribut||
+|Vol / destination|Attribut||
+|Vol / date|Attribut||
+|Vol / depart|Attribut||
+|Aeroport|Classe||Vol * - 1 Aeroport (pour depart et pour destination)
+|Aeroport / nom|Attribut||
+|===
+
+==== 4.2.2 - Diagramme de classes
+
+[plantuml, "td3422", png]     
+----
+@startuml
+
+class Equipage {
+}
+
+class Pilote {
+}
+
+class Copilote {
+}
+
+class PNC {
+}
+
+abstract class MembreEquipage {
+	nom
+}
+
+class Vol {
+	numero
+	date
+}
+
+class CategorieAvion {
+	libelle
+	minimumNombrePNC
+	maximumNombrePNC
+}
+
+class Avion {
+}
+
+class Aeroport {
+	nom
+}
+
+Equipage "*" -- "1" Pilote
+Equipage "*" -- "1" Copilote
+Equipage "*" -- "*" PNC
+Pilote --|> MembreEquipage
+Copilote --|> MembreEquipage
+PNC --|> MembreEquipage
+Equipage "1" -- "*" Vol
+CategorieAvion "0..2" -- "*" MembreEquipage
+CategorieAvion "1" -- "*" Avion
+Avion "1" -- "*" Vol
+Vol "*" -- "1" Aeroport : depart
+Vol "*" -- "1" Aeroport : destination
+
+@enduml
+----

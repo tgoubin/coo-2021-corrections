@@ -1,0 +1,409 @@
+:toc:
+
+= COO - TD7
+
+== Quelques éditeurs UML
+
+* PlantUML
+** https://plantuml-editor.kkeisuke.com/
+** https://liveuml.com/
+** https://www.planttext.com/
+** https://plantuml.com/fr/
+
+* StarUML : https://staruml.io/
+
+* Draw.io : https://app.diagrams.net/
+
+== Société IUT
+
+=== Diagramme des UC
+
+[plantuml, "td7UseCases", png]  
+----
+@startuml
+
+left to right direction
+
+actor Client
+actor Employé
+actor :Chargé de dossier:
+actor :Personnel intérimaire:
+actor Batchs
+
+usecase "Souscrire assurance" as UC1
+usecase "Assurer un ou plusieurs véhicules" as UC11
+usecase "Verser prime annuelle" as UC2
+usecase "Calculer prime annuelle" as UC3
+usecase "Calculer base prime" as UC31
+usecase "Calculer bonus / malus" as UC32
+usecase "Saisir dossier accident" as UC4
+usecase "Traiter dossier" as UC5
+usecase "Enregistrer rapport expertise" as UC51
+usecase "Déterminer et enregistrer part de responsabilité de l'assuré" as UC52
+usecase "Actualiser malus" as UC53
+usecase "Enregistrer montant indemnité de l'assuré" as UC54
+usecase "Emettre chèque indemnisation de l'assuré" as UC55
+usecase "Emettre chèque paiement des honoraires de l'expert" as UC56
+usecase "Enregistrer paiement" as UC6
+usecase "Editer avis échéance" as UC7
+
+Client -- UC1
+UC11 --> UC1 : <<extends>>
+Client -- UC2
+UC2 --> UC3 : <<includes>>
+UC3 --> UC31 : <<includes>>
+UC3 --> UC32 : <<includes>>
+Employé -- UC4
+:Chargé de dossier: -- UC5
+UC5 --> UC51 : <<includes>>
+UC5 --> UC52 : <<includes>>
+UC5 --> UC53 : <<includes>>
+UC5 --> UC54 : <<includes>>
+UC55 --> UC5 : <<extends>>
+UC5 --> UC56 : <<includes>>
+:Personnel intérimaire: -- UC6
+Batchs -- UC7
+UC7 --> UC3 : <<includes>>
+
+@enduml
+----
+
+=== Diagramme de classes métiers
+
+[NOTE]
+====
+C'est une proposition de diagramme de classes, mais pas forcément l'unique solution
+====
+
+[plantuml, "td7ClassesMetiers", png]  
+----
+@startuml
+
+class Client {
+    numero
+    nom
+    prenom
+    dateNaissance
+    adresse
+    dateObtentionPermis
+}
+
+class Vehicule {
+    numeroMineralogique
+    puissanceFiscale
+}
+
+Vehicule "*" -- "1" Client
+
+class ModeleVehicule {
+    libelle
+    categorieTarif
+}
+
+Vehicule "*" -- "1" ModeleVehicule
+
+class MarqueVehicule {
+    libelle
+}
+
+ModeleVehicule "*" -- "1" MarqueVehicule
+
+class Contrat {
+}
+
+Contrat "*" -- "1" Vehicule
+Contrat "*" -- "1" Client
+
+class TypeContrat {
+    libelle
+}
+
+Contrat "*" -- "1" TypeContrat
+
+class Accident {
+    dateAccident
+    expert
+    dateOuvertureDossier
+    description
+}
+
+class AccidentVehicule {
+    montantEstimeDegats
+}
+
+AccidentVehicule "*" -- "1" Vehicule
+AccidentVehicule "*" -- "1" Accident
+
+class TiersExterne {
+    nomProprietaire
+    prenomProprietaire
+}
+
+class AccidentTiersExterne {
+}
+
+AccidentTiersExterne "*" -- "1" TiersExterne
+AccidentTiersExterne "*" -- "1" Accident
+TiersExterne "1" -- "1" Vehicule
+
+class CompagnieAssurance {
+    raisonSociale
+    telephone
+    adresse
+}
+
+TiersExterne "*" -- "1" CompagnieAssurance
+
+class Paiement {
+    montantPaiement
+    datePaiement
+}
+
+Client "1" -- "*" Paiement
+
+@enduml
+----
+
+=== Diagramme de packages MVC
+
+[plantuml, "td7PackagesMVC", png] 
+----
+@startuml
+
+allow_mixing
+
+package batch {
+}
+
+package vue {
+}
+
+package controleur {
+}
+
+package modele {
+
+    package service {
+    }
+    
+    package dao {
+    }
+
+    package entites {
+    }
+}
+
+database "Base de données" as DB
+dao ..> DB : SQL
+
+vue ..> controleur
+controleur ..> modele
+batch ..> modele
+service ..> entites
+service ..> dao
+dao ..> entites
+
+note left of batch : Package à part du modèle MVC
+note right of service : Package contenant les classes de traitements / algorithmes métiers
+note right of dao : Package contenant les classes d'accès à la base de données
+note left of entites : Package du diagramme de classes métiers (voir plus haut)
+
+@enduml
+----
+
+
+=== Diagramme de classes MVC
+
+[plantuml, "td7ClassesMVC", png] 
+----
+@startuml
+
+allow_mixing
+
+package batch {
+    class TraitementBatch {
+    }
+}
+
+package vue {
+    class EcranEnregistrementPaiement {
+    }
+    
+    class EcranSaisieDossierAccident {
+    }
+    
+    class EcranTraitementDossierAccident {
+    }
+    
+    class EcranPaiementPrimeAnnuelle {
+    }
+    
+    class EcranSouscriptionAssurance {
+    }
+}
+
+package controleur {
+    class PaiementControleur {
+    }
+    
+    class DossierAccidentControleur {
+    }
+	
+	class SouscriptionAssuranceControleur {
+	}
+}
+
+package modele {
+
+    package service {
+        class EditionAvisEcheanceService {
+        }
+    
+		class PaiementService {
+		}
+		
+		class DossierAccidentService {
+		}
+		
+		class SouscriptionAssuranceService{
+		}
+    }
+    
+    package dao {
+        class ClientDAO {
+        }
+        
+        class VehiculeDAO {
+        }
+        
+        class ModeleVehiculeDAO {
+        }
+        
+        class MarqueVehiculeDAO {
+        }
+        
+        class ContratDAO {
+        }
+        
+        class TypeContratDAO {
+        }
+        
+        class AccidentDAO {
+        }
+        
+        class AccidentVehiculeDAO {
+        }
+        
+        class TiersExterneDAO {
+        }
+        
+        class AccidentTiersExterneDAO {
+        }
+        
+        class CompagnieAssuranceDAO {
+        }
+        
+        class PaiementDAO {
+        }
+    }
+
+    package entites {
+        class Client {
+            numero
+            nom
+            prenom
+            dateNaissance
+            adresse
+            dateObtentionPermis
+        }
+        
+        class Vehicule {
+            numeroMineralogique
+            puissanceFiscale
+        }
+        
+        class ModeleVehicule {
+            libelle
+            categorieTarif
+        }
+        
+        class MarqueVehicule {
+            libelle
+        }
+        
+        class Contrat {
+        }
+        
+        class TypeContrat {
+            libelle
+        }
+        
+        class Accident {
+            dateAccident
+            expert
+            dateOuvertureDossier
+            description
+        }
+        
+        class AccidentVehicule {
+            montantEstimeDegats
+        }
+        
+        class TiersExterne {
+            nomProprietaire
+            prenomProprietaire
+        }
+        
+        class AccidentTiersExterne {
+        }
+        
+        class CompagnieAssurance {
+            raisonSociale
+            telephone
+            adresse
+        }
+        
+        class Paiement {
+            montantPaiement
+            datePaiement
+        }
+    }
+}
+
+database "Base de données" as DB
+dao ..> DB : SQL
+        
+Vehicule "*" -- "1" ModeleVehicule
+Vehicule "*" -- "1" Client
+ModeleVehicule "*" -- "1" MarqueVehicule
+Contrat "*" -- "1" TypeContrat
+Contrat "*" -- "1" Vehicule
+Contrat "*" -- "1" Client
+AccidentVehicule "*" -- "1" Vehicule
+AccidentVehicule "*" -- "1" Accident
+AccidentTiersExterne "*" -- "1" TiersExterne
+AccidentTiersExterne "*" -- "1" Accident
+TiersExterne "1" -- "1" Vehicule
+TiersExterne "*" -- "1" CompagnieAssurance
+Client "1" -- "*" Paiement
+
+batch ..> modele
+vue ..> controleur
+controleur ..> modele
+service ..> dao
+service ..> entites
+dao ..> entites
+
+note right of vue : On imagine, pour simplifier, une classe par écran de cas d'utilisation (sauf le UC du batch). La réalité est probablement beaucoup plus complexe
+note right of controleur : On peut imaginer un contrôleur par un "thème métier"
+note right of service : On peut imaginer un service par un "thème métier"
+note left of dao : On peut imaginer une classe "DAO" par entité
+
+@enduml
+----
+
+=== Diagramme de séquences système pour l'UC "Saisie des dossiers accidents"
+
+=== Diagramme de séquences pour l'UC "Saisie des dossiers accidents"
+
+=== Diagramme de classes participantes pour l'UC "Saisie des dossiers accidents"

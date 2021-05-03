@@ -1,0 +1,201 @@
+:toc:
+
+= COO - TD2
+
+== Quelques éditeurs UML
+
+* PlantUML
+** https://www.planttext.com/
+** https://plantuml.com/fr/
+
+* StarUML : https://staruml.io/
+
+* Draw.io : https://app.diagrams.net/
+
+== 1 - Diagrammes simples
+
+=== 1.1
+
+==== 1.1.1
+
+[plantuml, "td2111", png]     
+----
+@startuml
+
+class Societe {
+}
+
+class Personne  {
+}
+
+class SocieteEmploiePersonne {
+    dateEmbauche
+    salaire
+}
+
+Personne "*" -- "*" Societe
+
+(Personne, Societe) . SocieteEmploiePersonne
+
+SocieteEmploiePersonne "0..1" -- "*" SocieteEmploiePersonne
+
+@enduml
+----
+
+==== 1.1.2
+
+[plantuml, "td2112", png]     
+----
+@startuml
+
+class Societe {
+}
+
+class Personne  {
+}
+
+class SocieteEmploiePersonne {
+    idSocieteEmploiePersonne
+    dateEmbauche
+    salaire
+}
+
+Personne "*" -- "*" Societe
+
+(Personne, Societe) . SocieteEmploiePersonne
+
+SocieteEmploiePersonne "0..1" -- "*" SocieteEmploiePersonne
+
+@enduml
+----
+
+==== 1.1.3
+
+[plantuml, "td2113", png]     
+----
+@startuml
+
+class Personne {
+}
+
+class Maison {
+}
+
+Personne "1" -- "*" Maison : louer
+Personne "1" -- "*" Maison : posseder
+
+@enduml
+----
+
+==== 1.1.4
+
+[plantuml, "td2114", png]     
+----
+@startuml
+
+class Revue {
+}
+
+class Semaine {
+}
+
+class PointDeVente {
+}
+
+class Vente {
+}
+
+Vente "*" -- "1" Revue
+Vente "*" -- "1" Semaine
+Vente "*" -- "1" PointDeVente
+
+@enduml
+----
+
+== 2 - Société canine
+
+=== 2.2
+
+=== 2.2.1
+
+[plantuml, "td2221", png]
+----
+@startuml
+
+class Chien {
+	numero
+	dateAppartenanceProprietaire
+	nom
+	dateNaissance
+	sexe
+}
+
+class Proprietaire {
+	nom
+	adresse
+}
+
+class Race {
+}
+
+class Concours {
+	ville
+	date
+}
+
+class ChienParticipeConcours {
+	classement
+}
+
+Chien "*" -- "1" Race
+Chien "1..10" -- "1" Proprietaire
+Chien "*" -- "1..10" Concours
+(Chien, Concours) . ChienParticipeConcours
+
+@enduml
+----
+
+=== 2.2.2
+
+[plantuml, "td2222", png]
+----
+@startuml
+
+class Chien {
+	numero
+	dateAppartenanceProprietaire
+	nom
+	dateNaissance
+	sexe
+}
+
+class Proprietaire {
+	nom
+	adresse
+}
+
+class Race {
+}
+
+class Concours {
+	ville
+	date
+}
+
+class ChienParticipeConcours {
+	classement
+}
+
+class Palmares {
+    libelle
+    prime
+}
+
+Chien "*" -- "1" Race
+Chien "1..10" -- "1" Proprietaire
+Chien "*" -- "1..10" Concours
+(Chien, Concours) . ChienParticipeConcours
+ChienParticipeConcours "*" -- "0..1" Palmares
+
+@enduml
+----

@@ -1,0 +1,210 @@
+:toc:
+
+= COO - TD1
+
+== Quelques éditeurs UML
+
+* PlantUML
+** https://www.planttext.com/
+** https://plantuml.com/fr/
+
+* StarUML : https://staruml.io/
+
+* Draw.io : https://app.diagrams.net/
+
+== 2 - Diagrammes de classes simples
+
+=== Examens
+
+[plantuml, "td121", png]     
+----
+@startuml
+
+class Etudiant {
+    numeroEtudiant
+    nom
+    prenom
+    dateNaissance
+}
+
+class Cours {
+    titre
+    codeModule
+}
+
+class Examen {
+    date
+    coefficient
+}
+
+class Note {
+    note
+}
+
+class Enseignant {
+    nom
+    prenom
+}
+
+Etudiant "1..*" -- "1..*" Cours
+Examen "*" -- "1" Cours
+Etudiant "1..*" -- "1..*" Examen
+(Etudiant, Examen) . Note
+Enseignant "1..*" -- "1..*" Cours
+
+@enduml
+----
+
+=== Ordinateurs portables
+
+[plantuml, "td122", png]     
+----
+@startuml
+
+class Portable {
+    prixAchat
+    valeurActuelle
+}
+
+class Clavier {
+    type
+}
+
+class Touche {
+    texte
+}
+
+class Proprietaire {
+    nom
+    prenom
+}
+
+Portable "1" -- "1" Clavier
+Clavier "1" -- "*" Touche
+Portable "*" -- "0..1" Proprietaire
+
+@enduml
+----
+
+== 3 - Tour opérateur
+
+[plantuml, "td13", png]     
+----
+@startuml
+
+class TourOperateur {
+    identifiant
+    nom
+    adresse
+    calculerPrixMoyenVoyage()
+}
+
+class Voyage {
+    identifiant
+    libelle
+    depart
+    destination
+    dateDepart
+    dateArrivee
+    prixBase
+    calculerPrixVoyage()
+    afficherListeOptionsVoyage()
+}
+
+class Option {
+    libelle
+}
+
+class "OptionVoyage" {
+    prix
+}
+
+abstract class Personne {
+    identifiant
+    nom
+    prenom
+}
+
+class Client {
+    adresse
+    afficherListeCommandesClient()
+}
+
+class Commande {
+    numero
+    date
+    etat
+}
+
+class Voyageur {
+    sexe
+    dateNaissance
+}
+
+Option "0..*" -- "0..*" Voyage
+
+Voyage "1..*" -- "1" TourOperateur
+
+(Option, Voyage) . OptionVoyage
+
+Client "1" -- "0..*" Commande
+
+Commande "0..*" -- "1" Voyage
+
+Voyageur "1..*" -- "1" Commande
+
+Voyageur --|> Personne
+Client --|> Personne
+
+@enduml
+----
+
+== 4 - Reverse Java -> UML
+
+[plantuml, "td14", png]     
+----
+@startuml
+
+class Accident {
+    id
+    description
+    date
+    time
+    other_details
+    employee
+    accidentType
+    seriousnessLevel
+}
+
+class AccidentType {
+    code
+    description
+}
+
+class Employee {
+    id
+    department
+    name
+    supervisor
+    other_employee_details
+    accidents
+    numberOfAccidents()
+    hasAccidents()
+    indexOfAccident()
+    minimumNumberOfAccidents()
+    addAccident(id, description, date, time, other_details, employee, accidentType, seriousnessLevel)
+    addAccident(accident)
+    removeAccident(accident)
+}
+
+class SeriousnessLevel {
+    code
+    description
+}
+
+Accident "*" -- "1" Employee
+Accident "*" -- "1" AccidentType
+Accident "*" -- "1" SeriousnessLevel
+
+@enduml
+----
