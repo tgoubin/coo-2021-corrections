@@ -214,6 +214,11 @@ note left of entites : Package du diagramme de classes métiers (voir plus haut)
 
 === Diagramme de classes MVC
 
+[NOTE]
+====
+Pour éviter un schéma "toile d'araignée", les relations (dépendances) entre les classes ont été simplifiées (par des relations entre les packages)
+====
+
 [plantuml, "td7ClassesMVC", png] 
 ----
 @startuml
@@ -246,10 +251,16 @@ package controleur {
     class PaiementControleur {
     }
     
-    class DossierAccidentControleur {
+	class ClientControleur {
+	}
+    
+	class VehiculeControleur {
+	}
+	
+    class AccidentControleur {
     }
 	
-	class SouscriptionAssuranceControleur {
+	class ContratControleur {
 	}
 }
 
@@ -258,14 +269,20 @@ package modele {
     package service {
         class EditionAvisEcheanceService {
         }
+		
+		class ClientService {
+		}
+		
+		class VehiculeService {
+		}
     
 		class PaiementService {
 		}
 		
-		class DossierAccidentService {
+		class AccidentService {
 		}
 		
-		class SouscriptionAssuranceService{
+		class ContratService{
 		}
     }
     
@@ -394,16 +411,113 @@ service ..> dao
 service ..> entites
 dao ..> entites
 
-note right of vue : On imagine, pour simplifier, une classe par écran de cas d'utilisation (sauf le UC du batch). La réalité est probablement beaucoup plus complexe
-note right of controleur : On peut imaginer un contrôleur par un "thème métier"
-note right of service : On peut imaginer un service par un "thème métier"
-note left of dao : On peut imaginer une classe "DAO" par entité
+note top of vue : On peut imaginer, pour simplifier, une classe par écran de cas d'utilisation (sauf le UC du batch). La réalité est probablement beaucoup plus complexe
+note top of controleur : On peut imaginer un contrôleur par un "thème métier"
+note top of service : On peut imaginer un service par un "thème métier"
+note bottom of dao : On peut imaginer une classe "DAO" par entité
 
 @enduml
 ----
 
 === Diagramme de séquences système pour l'UC "Saisie des dossiers accidents"
 
+[plantuml, "td7SequencesSystemeSaisieAccidents", png]  
+----
+@startuml
+
+actor Employé
+participant Système
+
+Employé -> Système: Ouverture de la vue "Saisie dossier accident"
+Système -> Employé: Affichage du formulaire de saisie d'un dossier accident
+
+loop Tant qu'il y a des erreurs de saisie ou que la saisie est incomplète
+	Employé -> Système: Saisie des informations (identification du véhicule impliqué, expert, date d'ouverture, description...)
+	
+	loop Pour chaque véhicule tiers
+		Employé -> Système: Saisie du numéro minéralogique du véhicule tiers
+	
+		alt Si tiers externe
+			Employé -> Système: Saisie des informations sur le tiers externe (véhicule, propriétaire, compagnie d'assurance...)
+		else Si tiers interne
+			Employé -> Système: Pré-saisie des informations sur le tiers interne
+		end
+	end
+	
+    opt Si il y a des erreurs de saisie
+        Système -> Employé: Affichage des messages d'erreurs de saisie
+    end
+end
+
+Système -> Système: Enregistrement du dossier accident
+Système -> Employé: Affichage d'un message de confirmation de l'enregistrement du dossier
+
+@enduml
+----
+
 === Diagramme de séquences pour l'UC "Saisie des dossiers accidents"
+
+[NOTE]
+====
+Ce diagramme de séquences est volontairement très détaillé
+====
+
+[plantuml, "td7SequencesSaisieAccidents", png]  
+----
+@startuml
+
+actor Employé
+participant EcranSaisieDossierAccident
+participant VehiculeControleur
+participant AccidentControleur
+participant VehiculeService
+participant AccidentService
+participant VehiculeDAO
+participant AccidentDAO
+database "Base de données"
+
+Employé -> EcranSaisieDossierAccident: Ouverture du formulaire
+
+loop Tant qu'il y a des erreurs de saisie ou que la saisie est incomplète
+	Employé -> EcranSaisieDossierAccident: Saisie des informations sur l'accident
+	
+	loop Pour chaque véhicule tiers
+		Employé -> EcranSaisieDossierAccident: Saisie numéro minéralogique véhicule tiers
+		EcranSaisieDossierAccident -> VehiculeControleur: getVehiculeByNumeroMineralogique(String numeroMineralogique)
+		VehiculeControleur -> VehiculeService: getVehiculeByNumeroMineralogique(String numeroMineralogique)
+		VehiculeService -> VehiculeDAO: getVehiculeByNumeroMineralogique(String numeroMineralogique)
+		VehiculeDAO -> "Base de données": "SELECT * FROM vehicule WHERE numeroMineralogique = ?"
+		"Base de données" -> VehiculeDAO: Véhicule correspondant au numéro minéralogique
+		VehiculeDAO -> VehiculeService: return vehicule
+		VehiculeService -> VehiculeControleur: return vehicule
+		VehiculeControleur -> EcranSaisieDossierAccident: return vehicule
+
+		alt Si vehicule == null (tiers externe)
+			Employé -> EcranSaisieDossierAccident: Saisie des informations sur le véhicule tiers
+		else (tiers externe)
+			EcranSaisieDossierAccident -> EcranSaisieDossierAccident: Pré-saisie des informations sur le véhicule tiers à partir des informations déjà connues par le système
+		end
+	end
+	
+	Employé -> EcranSaisieDossierAccident: Clic sur le bouton "Valider le dossier accident"
+	EcranSaisieDossierAccident -> AccidentControleur: validerNouveauDossierAccident(Accident accident)
+	AccidentControleur -> AccidentService: validerNouveauDossierAccident(Accident accident)
+	
+    opt Si il y a des erreurs de saisie
+		AccidentService -> AccidentControleur: return messageErreur
+		AccidentControleur -> EcranSaisieDossierAccident: return messageErreur
+    end
+end
+
+AccidentService -> AccidentDAO: creerDossierAccident(Accident accident)
+AccidentDAO -> "Base de données": "INSERT INTO accident..."
+"Base de données" -> AccidentDAO: Confirmation de la création du dossier accident
+AccidentDAO -> AccidentService: return accident
+AccidentService -> AccidentControleur: return accident
+AccidentControleur -> EcranSaisieDossierAccident: return accident
+EcranSaisieDossierAccident -> Employé: Affichage d'un message de confirmation de l'enregistrement du dossier
+
+@enduml
+----
 
 === Diagramme de classes participantes pour l'UC "Saisie des dossiers accidents"
