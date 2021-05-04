@@ -521,3 +521,85 @@ EcranSaisieDossierAccident -> Employé: Affichage d'un message de confirmation d
 ----
 
 === Diagramme de classes participantes pour l'UC "Saisie des dossiers accidents"
+
+[plantuml, "td7ClassesMVC", png] 
+----
+@startuml
+
+allow_mixing
+
+package vue {
+    class EcranSaisieDossierAccident {
+    }
+}
+
+package controleur {
+    class VehiculeControleur {
+	}
+	
+    class AccidentControleur {
+    }
+}
+
+package modele {
+
+    package service {
+        class VehiculeService {
+		}
+		
+		class AccidentService {
+		}
+    }
+    
+    package dao {
+        class VehiculeDAO {
+        }
+        
+        class AccidentDAO {
+        }
+    }
+
+    package entites {
+        class Vehicule {
+            numeroMineralogique
+            puissanceFiscale
+        }
+        
+        class Accident {
+            dateAccident
+            expert
+            dateOuvertureDossier
+            description
+        }
+        
+        class AccidentVehicule {
+            montantEstimeDegats
+        }
+        
+        class TiersExterne {
+            nomProprietaire
+            prenomProprietaire
+        }
+        
+        class AccidentTiersExterne {
+        }
+    }
+}
+
+database "Base de données" as DB
+dao ..> DB : SQL
+        
+AccidentVehicule "*" -- "1" Vehicule
+AccidentVehicule "*" -- "1" Accident
+AccidentTiersExterne "*" -- "1" TiersExterne
+AccidentTiersExterne "*" -- "1" Accident
+TiersExterne "1" -- "1" Vehicule
+
+vue ..> controleur
+controleur ..> modele
+service ..> dao
+service ..> entites
+dao ..> entites
+
+@enduml
+----
