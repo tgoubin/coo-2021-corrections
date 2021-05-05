@@ -1,0 +1,476 @@
+:toc:
+
+= Cas simple d'utilisation du modèle MVC
+
+== Objectif
+
+Montrer l'intérêt de l'ensemble des couches du modèle MVC.
+
+== Le sujet d'exemple
+
+Réaliser une mini-application qui va enregistrer la moyenne d'un étudiant à partir d'une liste de notes.
+
+== La solution technique
+
+* *IHM* : une page web, contenant :
+** un champ de formulaire *Nom de l'étudiant*
+** un champ de formulaire *Prénom de l'étudiant*
+** un champ de formulaire *Notes de l'étudiant* (séparées par un espace)
+** un bouton *"Valider"*
+** et *c'est tout* !
+* *Le stockage des moyennes par étudiant* : une base de données
+
+== La démarche
+
+=== 1. Commencer à modéliser ce qu'on sait
+
+A partir du sujet ci-dessus, a des informations sur :
+
+* l'IHM (la *vue*)
+* le *modèle* métier
+
+-> *On peut démarrer notre modèle MVC*
+
+[plantuml, "exempleSimpleMVC_1", png] 
+----
+@startuml
+
+allow_mixing
+
+package vue {
+    file EcranSaisie {
+    }
+	note right of EcranSaisie: C'est notre page web, avec du code HTML / CSS / JavaScript dedans, qui n'a aucune importance ici
+}
+
+package controleur {
+    
+}
+note right of controleur: Pour l'instant, on ne sait pas ce qu'il y a dedans
+
+package modele {
+	class MoyenneEtudiant {
+		- nomEtudiant
+		- prenomEtudiant
+		- moyenneEtudiant
+		+ getNomEtudiant()
+		+ getPrenomEtudiant()
+		+ getMoyenneEtudiant()
+		+ setNomEtudiant(String nom)
+		+ setPrenomEtudiant(String prenom)
+		+ setMoyenneEtudiant(float moyenne)
+	}
+	note right of MoyenneEtudiant: Et c'est tout ce dont on a besoin
+}
+
+vue ..> controleur
+controleur ..> modele
+
+@enduml
+----
+
+-> *On peut également commencer à imaginer ce découpage, en composants de l'application*
+
+[plantuml, "exempleSimpleMVC_2", png] 
+----
+@startuml
+
+allow_mixing
+
+folder "Page web" as web {
+	package vue {
+		file EcranSaisie {
+		}
+	}
+}
+note right of web: c'est la partie "client" de l'application
+
+folder "Application (API) Java" as java {
+	package controleur {
+	}
+
+	package modele {
+		class MoyenneEtudiant
+	}
+}
+note right of java: c'est la partie "serveur" de l'application
+
+folder "Base de données" as DB {
+	database moyenne_etudiant
+	note right of moyenne_etudiant: C'est notre unique table de base de données (qui contient les champs nom_etudiant, prenom_etudiant et moyenne_etudiant)
+}
+
+vue ..> controleur
+controleur ..> modele
+modele ..> DB: SQL
+
+@enduml
+----
+
+*On a donc le début et la fin de notre démarche de conception :*
+
+* l'interface de saisie
+* le stockage des informations
+
+-> *Le but est de relier les deux*
+
+=== 2. Enrichir notre modèle en anticipant les besoins techniques
+
+A un moment de la réalisation de l'application, les problématiques suivantes vont se poser à nous :
+
+* comment faire communiquer la page web avec l'application (API) Java ?
+* comme informations saisies par l'utilisateur, on a une liste de notes. Mais au final, on veut une moyenne -> où effectuer ce calcul ?
+* comment faire communiquer l'application (API) Java avec la base de données ?
+
+-> *3 questions : 3 solutions d'enrichissement du modèle MVC*
+
+==== Communication entre la page web et l'API Java
+
+La solution est simple : c'est un *contrôleur* qui aura ce rôle d'intermédiaire entre la page web et l'API Java.
+
+Ses actions :
+
+* réceptionner une requête (HTTP) de la page web
+* traduire le contenu de cette requête en objet Java
+* transmettre cet objet Java à la partie *modèle* pour qu'il puisse être traité
+
+-> *Enrichissons notre modèle en conséquence*
+
+[plantuml, "exempleSimpleMVC_3", png] 
+----
+@startuml
+
+allow_mixing
+
+folder "Page web" as web {
+	package vue {
+		file EcranSaisie {
+		}
+	}
+}
+
+folder "Application (API) Java" as java {
+	package controleur {
+		class MoyenneEtudiantControleur {
+			+ enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP): void
+		}
+		note right of MoyenneEtudiantControleur: On ajoute ce contrôleur, avec la méthode qui permet de réceptionner la requête de la page web
+	}
+
+	package modele {
+		class MoyenneEtudiant
+	}
+}
+
+folder "Base de données" as DB {
+	database moyenne_etudiant
+}
+
+EcranSaisie ..> MoyenneEtudiantControleur: HTTP
+controleur ..> modele
+modele ..> DB: SQL
+
+@enduml
+----
+
+==== Calcul de la moyenne
+
+Ce calcul doit être effectué dans la partie *modèle* (puisqu'il en traite un objet), dans une classe faite pour traiter ce type de *traitements métiers*.
+
+Ce genre de classes est communément appelé *service*.
+
+-> *Enrichissons notre modèle en conséquence*
+
+[plantuml, "exempleSimpleMVC_4", png] 
+----
+@startuml
+
+allow_mixing
+
+folder "Page web" as web {
+	package vue {
+		file EcranSaisie {
+		}
+	}
+}
+
+folder "Application (API) Java" as java {
+	package controleur {
+		class MoyenneEtudiantControleur {
+			+ enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP): void
+		}
+	}
+
+	package modele {
+		package service {
+			class MoyenneEtudiantService {
+				+ calculerMoyenneEtudiant(List listeNotes): Float
+			}
+		}
+		note bottom of MoyenneEtudiantService: On ajoute cette classe, avec la méthode qui permet de calculer la moyenne
+	
+		package entites {
+			class MoyenneEtudiant
+		}
+	}
+}
+
+folder "Base de données" as DB {
+	database moyenne_etudiant
+}
+
+EcranSaisie ..> MoyenneEtudiantControleur: HTTP
+controleur ..> modele
+modele ..> DB: SQL
+
+@enduml
+----
+
+==== Communication entre l'API Java et la base de données
+
+Ici, l'API Java va devoir effectuer une *requête* vers la base de données, afin de pouvoir sauvegarder la moyenne d'un étudiant.
+
+Cette action est généralement faite depuis une classe de type *DAO* (Data Access Object), dont le rôle est d'effectuer des requêtes SQL.
+
+-> *Enrichissons notre modèle en conséquence*
+
+[plantuml, "exempleSimpleMVC_5", png] 
+----
+@startuml
+
+allow_mixing
+
+folder "Page web" as web {
+	package vue {
+		file EcranSaisie {
+		}
+	}
+}
+
+folder "Application (API) Java" as java {
+	package controleur {
+		class MoyenneEtudiantControleur {
+			+ enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP): void
+		}
+	}
+
+	package modele {
+		package service {
+			class MoyenneEtudiantService {
+				+ calculerMoyenneEtudiant(List listeNotes): Float
+			}
+		}
+		
+		package dao {
+			class MoyenneEtudiantDAO {
+				+ insertMoyenneEtudiant(MoyenneEtudiant moyenneEtudiant): void
+			}
+		}
+		note bottom of MoyenneEtudiantDAO: On ajoute cette classe, avec la méthode qui permet d'effectuer la requête "INSERT INTO moyenne_etudiant..."
+	
+		package entites {
+			class MoyenneEtudiant
+		}
+	}
+}
+
+folder "Base de données" as DB {
+	database moyenne_etudiant
+}
+
+EcranSaisie ..> MoyenneEtudiantControleur: HTTP
+controleur ..> modele
+MoyenneEtudiantDAO ..> MoyenneEtudiant
+MoyenneEtudiantDAO ..> DB: SQL
+
+@enduml
+----
+
+=== 3. Finaliser notre modèle en complétant certaines liaisons
+
+A ce stade, la conception est presque terminée, mais il manque des précisions sur les liaisons entre certaines classes.
+
+==== Liaison entre `MoyenneEtudiantControleur` et la partie modèle
+
+Commençons à imaginer (sous forme de diagramme de séquences) le contenu de la méthode `MoyenneEtudiantControleur -> enregistrerMoyenneEtudiant()`
+
+[plantuml, "exempleSimpleMVC_6", png] 
+----
+@startuml
+
+actor Utilisateur
+participant EcranSaisie
+participant MoyenneEtudiantControleur
+participant "???" as what
+
+Utilisateur -> EcranSaisie: Saisie du nom, prénom et liste de notes
+EcranSaisie -> MoyenneEtudiantControleur: enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP)
+note left: Requête HTTP contenant le nom, prénom et la liste de notes
+MoyenneEtudiantControleur -> MoyenneEtudiantControleur: String nom = requeteHTTP.getNom(), List notes = requeteHTTP.getNotes()...
+note left: ~= extraction du nom, prénom et liste des notes depuis la requête HTTP
+MoyenneEtudiantControleur -> what: enregistrerMoyenneEtudiant(String nom, String prenom, List notes)
+note left: Il manque quelque chose dans notre modèle
+
+@enduml
+----
+
+Dans notre modèle élaboré pour le moment, on ne dispose pas de méthode correspondant directement à `enregistrerMoyenneEtudiant(String nom, String prenom, List notes)`.
+
+Par contre, on sait qu'on a :
+
+* `MoyenneEtudiantService -> calculerMoyenneEtudiant(List listeNotes)` : qui calcule une moyenne à partir d'une liste de notes
+* `MoyenneEtudiantDAO -> insertMoyenneEtudiant(MoyenneEtudiant moyenneEtudiant)` : qui insère la moyenne d'un étudiant dans la base de données
+
+La méthode `enregistrerMoyenneEtudiant` qu'on souhaite avoir à disposition est l'enchaînement des deux précédentes. On va donc adapter notre modèle en conséquence.
+
+==== Deux solutions techniques possibles
+
+===== Première solution : "bourrine"
+
+On pourrait simplement ne pas créer de méthode `enregistrerMoyenneEtudiant`, mais appeler `MoyenneEtudiantService -> calculerMoyenneEtudiant` et `MoyenneEtudiantDAO -> insertMoyenneEtudiant` depuis le contrôleur.
+
+On obtiendrait ceci :
+
+[plantuml, "exempleSimpleMVC_7", png] 
+----
+@startuml
+
+actor Utilisateur
+participant EcranSaisie
+participant MoyenneEtudiantControleur
+participant MoyenneEtudiantService
+participant MoyenneEtudiantDAO
+participant "Base de données" as DB
+
+Utilisateur -> EcranSaisie: Saisie du nom, prénom et liste de notes
+EcranSaisie -> MoyenneEtudiantControleur: enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP)
+MoyenneEtudiantControleur -> MoyenneEtudiantControleur: String nom = requeteHTTP.getNom(), List notes = requeteHTTP.getNotes()...
+MoyenneEtudiantControleur -> MoyenneEtudiantService: calculerMoyenneEtudiant(List listeNotes)
+MoyenneEtudiantService -> MoyenneEtudiantControleur: return moyenne
+MoyenneEtudiantControleur -> MoyenneEtudiantDAO: insertMoyenneEtudiant(MoyenneEtudiant moyenneEtudiant)
+MoyenneEtudiantDAO -> DB: INSERT INTO moyenne_etudiant...
+
+@enduml
+----
+
+Sauf qu'en utilisant cette solution, on sort un peu du rôle qu'on attribue à un contrôleur.
+
+En effet, le simple fait d'enchaîner l'appel de deux méthodes du *modèle* (`calculerMoyenneEtudiant` et `insertMoyenneEtudiant`) devrait déjà être considéré comme devant faire partie du modèle.
+
+*Un contrôleur doit contenir le moins d'instructions possibles !! Donc le moins d'appels possibles vers la partie modèle.*
+
+===== Deuxième solution : "philosophiquement" mieux
+
+Pour satisfaire cette bonne pratique, décalons les appels de `calculerMoyenneEtudiant` et `insertMoyenneEtudiant` dans la partie *modèle*. La classe `MoyenneEtudiantService` - qui existe déjà - est toute indiquée pour cela :
+
+[plantuml, "exempleSimpleMVC_8", png] 
+----
+@startuml
+
+class MoyenneEtudiantService {
+	+ enregistrerMoyenneEtudiant(String nom, String prenom, List notes): void
+	- calculerMoyenneEtudiant(List listeNotes): Float
+}
+
+@enduml
+----
+
+[NOTE]
+====
+La méthode `calculerMoyenneEtudiant` devient privée, puisqu'uniquement appelée depuis une autre méthode de la même classe.
+====
+
+Et le diagramme de séquences deviendrait celui-ci :
+
+[plantuml, "exempleSimpleMVC_9", png] 
+----
+@startuml
+
+actor Utilisateur
+participant EcranSaisie
+participant MoyenneEtudiantControleur
+participant MoyenneEtudiantService
+participant MoyenneEtudiantDAO
+participant "Base de données" as DB
+
+Utilisateur -> EcranSaisie: Saisie du nom, prénom et liste de notes
+EcranSaisie -> MoyenneEtudiantControleur: enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP)
+MoyenneEtudiantControleur -> MoyenneEtudiantControleur: String nom = requeteHTTP.getNom(), List notes = requeteHTTP.getNotes()...
+MoyenneEtudiantControleur -> MoyenneEtudiantService: enregistrerMoyenneEtudiant(String nom, String prenom, List notes)
+MoyenneEtudiantService -> MoyenneEtudiantService: calculerMoyenneEtudiant(List listeNotes)
+MoyenneEtudiantService -> MoyenneEtudiantService: return moyenne
+MoyenneEtudiantService -> MoyenneEtudiantDAO: insertMoyenneEtudiant(MoyenneEtudiant moyenneEtudiant)
+MoyenneEtudiantDAO -> DB: INSERT INTO moyenne_etudiant...
+
+@enduml
+----
+
+==== Modèle MVC final
+
+[plantuml, "exempleSimpleMVC_10", png] 
+----
+@startuml
+
+allow_mixing
+
+folder "Page web" as web {
+	package vue {
+		file EcranSaisie {
+		}
+	}
+}
+
+folder "Application (API) Java" as java {
+	package controleur {
+		class MoyenneEtudiantControleur {
+			+ enregistrerMoyenneEtudiant(RequeteHTTP requeteHTTP): void
+		}
+	}
+
+	package modele {
+		package service {
+			class MoyenneEtudiantService {
+				+ enregistrerMoyenneEtudiant(String nom, String prenom, List notes): void
+				- calculerMoyenneEtudiant(List listeNotes): Float
+			}
+		}
+		
+		package dao {
+			class MoyenneEtudiantDAO {
+				+ insertMoyenneEtudiant(MoyenneEtudiant moyenneEtudiant): void
+			}
+		}
+	
+		package entites {
+			class MoyenneEtudiant
+		}
+	}
+}
+
+folder "Base de données" as DB {
+	database moyenne_etudiant
+}
+
+EcranSaisie ..> MoyenneEtudiantControleur: HTTP
+controleur ..> modele
+MoyenneEtudiantControleur ..> MoyenneEtudiantService
+MoyenneEtudiantService ..> MoyenneEtudiantDAO
+MoyenneEtudiantService ..> MoyenneEtudiant
+MoyenneEtudiantDAO ..> MoyenneEtudiant
+MoyenneEtudiantDAO ..> DB: SQL
+
+@enduml
+----
+
+=== Conclusion
+
+Dans ce modèle MVC, chacun a son rôle :
+
+* la *vue* permet à un utilisateur de saisir des informations
+* le *contrôleur* :
+** réceptionne les informations transmises par l'utilisateur
+** les traduit (en objets Java)
+** les transmet au modèle
+* le *modèle* :
+** effectue les traitements et calculs nécessaires (la moyenne) en rapport avec la logique métier
+** permet le stockage des informations souhaitées
