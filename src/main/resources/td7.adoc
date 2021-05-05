@@ -444,6 +444,8 @@ loop Tant qu'il y a des erreurs de saisie ou que la saisie est incomplète
 		end
 	end
 	
+	Employé -> Système: Clic sur le bouton "Valider le dossier accident"
+	
     opt Si il y a des erreurs de saisie
         Système -> Employé: Affichage des messages d'erreurs de saisie
     end
@@ -494,7 +496,7 @@ loop Tant qu'il y a des erreurs de saisie ou que la saisie est incomplète
 
 		alt Si vehicule == null (tiers externe)
 			Employé -> EcranSaisieDossierAccident: Saisie des informations sur le véhicule tiers
-		else (tiers externe)
+		else (tiers interne)
 			EcranSaisieDossierAccident -> EcranSaisieDossierAccident: Pré-saisie des informations sur le véhicule tiers à partir des informations déjà connues par le système
 		end
 	end
@@ -522,7 +524,7 @@ EcranSaisieDossierAccident -> Employé: Affichage d'un message de confirmation d
 
 === Diagramme de classes participantes pour l'UC "Saisie des dossiers accidents"
 
-[plantuml, "td7ClassesMVC", png] 
+[plantuml, "td7ClassesParticipantes", png] 
 ----
 @startuml
 
